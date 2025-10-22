@@ -29,15 +29,17 @@
 
 ### Сценарий 1: Лотерея
 
-![Лотерея](Скриншот нужно сделать)
+![Лотерея](<img width="1919" height="964" alt="image" src="https://github.com/user-attachments/assets/956ce05b-985f-4e2e-9ff9-dd4ec5730c34" />)
 
 ### Сценарий 2: Аудит
 
-![Аудит](Скриншот нужно сделать)
+![Аудит](<img width="1919" height="965" alt="image" src="https://github.com/user-attachments/assets/b5e4c7ba-063e-4e98-9885-2192606ee7cf" />
+)
 
 ### Сценарий 3: Демо
 
-![Демо](Скриншот нужно сделать)
+![Демо](<img width="1919" height="964" alt="image" src="https://github.com/user-attachments/assets/af69e24e-0124-4dd8-baa5-2f5891d3424b" />
+)
 
 ---
 
