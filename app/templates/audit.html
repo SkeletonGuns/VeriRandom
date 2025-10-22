@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Аудит генератора</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container { background: #1e293b; padding: 20px; border-radius: 12px; }
+        h1 { color: #f87171; text-align: center; }
+        .upload-area {
+            border: 2px dashed #475569;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background: #334155;
+        }
+        .upload-area:hover {
+            border-color: #f87171;
+            background: #3c4b63;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .upload-btn {
+            background: #f87171;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .result { margin-top: 20px; display: none; }
+        .anomaly {
+            background: #451a1a;
+            color: #fecaca;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .histogram {
+            height: 150px;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            margin: 20px 0;
+            background: #334155;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .bar {
+            flex: 1;
+            background: #f87171;
+            border-radius: 4px 4px 0 0;
+        }
+        .tests {
+            background: #334155;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            margin-top: 15px;
+        }
+        .status { text-align: center; margin: 15px; color: #fbbf24; }
+        .error { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Аудит внешнего генератора</h1>
+        <p>Загрузите файл с последовательностью чисел (бинарный или текстовый) для анализа случайности.</p>
+
+        <div class="upload-area" id="dropZone">
+            <p>📁 Перетащите файл сюда или</p>
+            <label class="upload-btn">
+                Выберите файл
+                <input type="file" id="fileInput" accept=".bin,.txt,.csv,.log">
+            </label>
+            <p><small>Поддерживаются: бинарные файлы, текст с числами (разделённые пробелами/переводами строк)</small></p>
+        </div>
+
+        <div class="status" id="status"></div>
+        <div class="result" id="result">
+            <h2>📊 Результаты анализа</h2>
+
+            <div id="anomalies"></div>
+
+            <div>
+                <strong>Гистограмма распределения (16 бинов):</strong>
+                <div class="histogram" id="histogram"></div>
+            </div>
+
+            <div class="tests">
+                <strong>Статистика:</strong><br>
+                Размер файла: <span id="fileSize"></span> байт<br>
+                Энтропия: <span id="entropy"></span> бит/байт<br>
+                χ²-статистика: <span id="chi2"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const statusEl = document.getElementById('status');
+        const resultEl = document.getElementById('result');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropZone.style.borderColor = '#f87171';
+            dropZone.style.backgroundColor = '#3c4b63';
+        }
+
+        function unhighlight() {
+            dropZone.style.borderColor = '#475569';
+            dropZone.style.backgroundColor = '#334155';
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFiles, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length) {
+                uploadFile(files[0]);
+            }
+        }
+
+        function handleFiles() {
+            if (this.files.length) {
+                uploadFile(this.files[0]);
+            }
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            statusEl.textContent = "Анализ данных...";
+            statusEl.className = "status";
+            resultEl.style.display = 'none';
+
+            try {
+                const response = await fetch('/audit/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Ошибка: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Аномалии
+                const anomaliesDiv = document.getElementById('anomalies');
+                anomaliesDiv.innerHTML = '';
+                if (data.anomalies && data.anomalies.length > 0) {
+                    data.anomalies.forEach(msg => {
+                        const el = document.createElement('div');
+                        el.className = 'anomaly';
+                        el.textContent = `⚠️ ${msg}`;
+                        anomaliesDiv.appendChild(el);
+                    });
+                } else {
+                    anomaliesDiv.innerHTML = '<div class="anomaly" style="background:#1a451a; color:#bbf7d0;">✅ Аномалий не обнаружено</div>';
+                }
+
+                const histDiv = document.getElementById('histogram');
+                histDiv.innerHTML = '';
+                const maxVal = Math.max(...data.histogram);
+                data.histogram.forEach(val => {
+                    const bar = document.createElement('div');
+                    bar.className = 'bar';
+                    bar.style.height = maxVal ? `${(val / maxVal) * 100}%` : '0';
+                    histDiv.appendChild(bar);
+                });
+
+                document.getElementById('fileSize').textContent = data.file_size_bytes;
+                document.getElementById('entropy').textContent = data.entropy_per_byte;
+                document.getElementById('chi2').textContent = data.chi_square_stat;
+
+                resultEl.style.display = 'block';
+                statusEl.textContent = "Анализ завершён!";
+                statusEl.style.color = "#34d399";
+
+            } catch (e) {
+                statusEl.textContent = "Ошибка: " + e.message;
+                statusEl.className = "status error";
+            }
+        }
+    </script>
+</body>
+</html>

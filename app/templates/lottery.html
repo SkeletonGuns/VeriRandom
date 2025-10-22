@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Лотерейный тираж</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container { background: #1e293b; padding: 20px; border-radius: 12px; }
+        h1 { color: #60a5fa; text-align: center; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+        }
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        .result { margin-top: 20px; }
+        .numbers {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .number {
+            width: 60px;
+            height: 60px;
+            background: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+        .steps {
+            margin: 20px 0;
+            padding: 15px;
+            background: #334155;
+            border-radius: 8px;
+        }
+        .step { margin: 8px 0; color: #94a3b8; }
+        .active { color: #60a5fa; font-weight: bold; }
+        .tests, .snapshot {
+            margin-top: 15px;
+            padding: 10px;
+            background: #334155;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .status { text-align: center; margin: 15px; color: #fbbf24; }
+        .error { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔮 Лотерейный тираж</h1>
+        <p>Система использует экзотическую энтропию из браузера для генерации честной комбинации.</p>
+
+        <button id="drawBtn" onclick="startDraw()">Запустить тираж</button>
+        <div class="status" id="status"></div>
+
+        <div class="result" id="result" style="display:none;">
+            <h2>✅ Результат тиража</h2>
+            <div class="numbers" id="numbers"></div>
+
+            <div class="steps">
+                <h3>Этапы обработки:</h3>
+                <div id="steps"></div>
+            </div>
+
+            <div class="tests">
+                <strong>Статистические тесты:</strong><br>
+                Энтропия: <span id="entropy"></span> бит/байт<br>
+                χ²-статистика: <span id="chi2"></span>
+            </div>
+
+            <div class="snapshot">
+                <strong>Цифровой слепок:</strong><br>
+                <code id="snapshot"></code>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function startDraw() {
+            const btn = document.getElementById('drawBtn');
+            const status = document.getElementById('status');
+            const result = document.getElementById('result');
+
+            btn.disabled = true;
+            status.textContent = "Генерация тиража... Пожалуйста, подождите.";
+            status.className = "status";
+
+            try {
+                const res = await fetch('/lottery/draw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!res.ok) {
+                    throw new Error(`Ошибка: ${res.status}`);
+                }
+
+                const data = await res.json();
+
+                const numbersDiv = document.getElementById('numbers');
+                numbersDiv.innerHTML = '';
+                data.draw.forEach(num => {
+                    const el = document.createElement('div');
+                    el.className = 'number';
+                    el.textContent = num;
+                    numbersDiv.appendChild(el);
+                });
+
+                const stepsDiv = document.getElementById('steps');
+                stepsDiv.innerHTML = '';
+                data.processing_steps.forEach(step => {
+                    const el = document.createElement('div');
+                    el.className = 'step active';
+                    el.textContent = `✓ ${step}`;
+                    stepsDiv.appendChild(el);
+                });
+
+                document.getElementById('entropy').textContent = data.tests.entropy_per_byte;
+                document.getElementById('chi2').textContent = data.tests.chi_square_stat;
+
+                document.getElementById('snapshot').textContent = data.snapshot_hash;
+
+                result.style.display = 'block';
+                status.textContent = "Тираж успешно сгенерирован!";
+                status.style.color = "#34d399";
+            } catch (e) {
+                status.textContent = "Ошибка: " + e.message;
+                status.className = "status error";
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

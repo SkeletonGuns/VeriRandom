@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>main</title>
+    <style>
+        body {
+            font-family: 'Consolas', monospace;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #58a6ff;
+        }
+        .container {
+            display: flex;
+            gap: 40px;
+            margin-top: 20px;
+            width: 90%;
+            max-width: 1200px;
+        }
+        .panel {
+            flex: 1;
+            background-color: #161b22;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        #canvas-output {
+            border: 1px solid #30363d;
+            display: block;
+        }
+        .data-output {
+            height: 300px;
+            overflow-y: scroll;
+            margin-top: 10px;
+            padding: 5px;
+            border: 1px solid #30363d;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 10px;
+        }
+        .status-bar {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #21262d;
+            border-radius: 4px;
+            width: 90%;
+            max-width: 1200px;
+        }
+        .status-bar span {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .entropy-bits {
+            color: #3fb950;
+        }
+        button {
+            margin-top: 10px;
+            padding: 6px 12px;
+            background: #238636;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background: #2ea043; }
+    </style>
+</head>
+<body>
+
+    <h1>MAin</h1>
+    <p><em>Сбор энтропии через GPU/CPU timing jitter → Chaotic Map → Отправка на сервер</em></p>
+
+    <div class="status-bar">
+        <span>Статус: <strong id="status">Инициализация...</strong></span>
+        <span>Собрано байт: <strong id="byte-count" class="entropy-bits">0</strong></span>
+        <span>Последний джиттер (мкс): <strong id="last-jitter">0.00</strong></span>
+        <span>Отправлено пакетов: <strong id="sent-count">0</strong></span>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h2>1. Визуальный Хаос (GPU Jitter)</h2>
+            <p>Canvas-рендеринг, зависимый от GPU, VSync и драйверов.</p>
+            <canvas id="canvas-output" width="400" height="200"></canvas>
+        </div>
+
+        <div class="panel">
+            <h2>2. Цифровой Хаос (CPU Jitter)</h2>
+            <p>Логистическое отображение: \(x_{n+1} = r \cdot x_n \cdot (1 - x_n)\)</p>
+            <div class="data-output" id="logistic-output">Ожидание данных...</div>
+        </div>
+    </div>
+
+    <div class="panel" style="width: 90%; max-width: 1200px; margin-top: 20px;">
+        <h2>Сырая энтропия (последние 64 байта)</h2>
+        <div class="data-output" id="entropy-output" style="height: 100px;">Ожидание сбора...</div>
+        <button onclick="clearAndRestart()">Очистить и перезапустить</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas-output');
+        const ctx = canvas.getContext('2d');
+        const logisticOutput = document.getElementById('logistic-output');
+        const entropyOutput = document.getElementById('entropy-output');
+        const statusEl = document.getElementById('status');
+        const byteCountEl = document.getElementById('byte-count');
+        const lastJitterEl = document.getElementById('last-jitter');
+        const sentCountEl = document.getElementById('sent-count');
+
+        let entropyBytes = [];
+        let frameCount = 0;
+        let lastCanvasTime = performance.now();
+        let lastLogisticTime = performance.now();
+        let animationFrameId = null;
+        let collecting = true;
+        let sentPackets = 0;
+
+        let x_n = (performance.now() * 1000000) % 1; // дробная часть → [0,1)
+        const r = 3.9999;
+
+        function renderChaos() {
+            if (!collecting) return;
+
+            const w = canvas.width;
+            const h = canvas.height;
+            const t = performance.now() * 0.001;
+
+            const imageData = ctx.createImageData(w, h);
+            const data = imageData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const idx = i / 4;
+                const x = idx % w;
+                const y = Math.floor(idx / w);
+                const noise = Math.sin(x * 0.1 + t * 5) * Math.cos(y * 0.05 + t * 3) * 128 + 128;
+                data[i]     = noise % 256;
+                data[i + 1] = (noise + 50) % 256;
+                data[i + 2] = (noise + 100) % 256;
+                data[i + 3] = 255;
+            }
+            ctx.putImageData(imageData, 0, 0);
+
+            const now = performance.now();
+            const jitter = now - lastCanvasTime;
+            lastCanvasTime = now;
+
+            collectEntropy(jitter, 'canvas');
+            animationFrameId = requestAnimationFrame(renderChaos);
+        }
+
+        async function runLogisticLoop() {
+            while (collecting) {
+                const iterations = 30000;
+                let sum = 0;
+                for (let i = 0; i < iterations; i++) {
+                    x_n = r * x_n * (1 - x_n);
+                    sum += x_n;
+                }
+
+                if (frameCount % 20 === 0) {
+                    logisticOutput.textContent = 
+                        `Среднее: ${ (sum / iterations).toFixed(10) }\n` +
+                        `x_n: ${x_n.toExponential(10)}\n\n` +
+                        logisticOutput.textContent.split('\n').slice(0, 6).join('\n');
+                }
+
+                const now = performance.now();
+                const jitter = now - lastLogisticTime;
+                lastLogisticTime = now;
+
+                collectEntropy(jitter, 'logistic');
+                frameCount++;
+
+                await new Promise(r => setTimeout(r, 7));
+            }
+        }
+
+        function collectEntropy(timeDeltaMs, source) {
+            const microSec = timeDeltaMs * 1000;
+
+            // Источник A: целая часть (планировщик ОС)
+            const intNoise = Math.floor(microSec);
+
+            // Источник B: дробная часть (аппаратный шум, до наносекунд)
+            const fractionalPart = microSec - intNoise;
+            const fracNoise = Math.floor(fractionalPart * 10000000); // 7 знаков
+
+            // Источник C: системное время (независимый таймер)
+            const timeNoise = Math.floor(performance.now() * 10000);
+
+            // Комбинируем три источника через XOR → младший байт
+            const byte = (intNoise ^ fracNoise ^ timeNoise) & 0xFF;
+            entropyBytes.push(byte);
+
+            byteCountEl.textContent = entropyBytes.length;
+
+            if (entropyBytes.length % 64 === 0) {
+                const hex = entropyBytes.slice(-64).map(b => b.toString(16).padStart(2, '0')).join(' ');
+                entropyOutput.textContent = hex + '\n' + entropyOutput.textContent;
+                lastJitterEl.textContent = (microSec / 1000).toFixed(4);
+            }
+
+            statusEl.textContent = `Сбор активен (${source})`;
+
+            // Отправляем пакет каждые 256 байт
+            if (entropyBytes.length >= 256) {
+                sendEntropyBatch();
+            }
+        }
+
+        async function sendEntropyBatch() {
+            const batch = entropyBytes.splice(0, 256);
+
+            try {
+                const response = await fetch('/entropy/feed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ raw: batch, source: 'browser-jitter' })
+                });
+
+                if (response.ok) {
+                    sentPackets++;
+                    sentCountEl.textContent = sentPackets;
+                } else {
+                    statusEl.textContent = 'Ошибка отправки';
+                }
+            } catch (e) {
+                statusEl.textContent = 'Сетевая ошибка: ' + e.message;
+            }
+        }
+
+        function startCollection() {
+            collecting = true;
+            x_n = (performance.now() * 1000000) % 1;
+            lastCanvasTime = performance.now();
+            lastLogisticTime = performance.now();
+            frameCount = 0;
+
+            animationFrameId = requestAnimationFrame(renderChaos);
+            runLogisticLoop().catch(console.error);
+
+            statusEl.textContent = 'Сбор активен';
+        }
+
+        function clearAndRestart() {
+            collecting = false;
+            cancelAnimationFrame(animationFrameId);
+            entropyBytes = [];
+            byteCountEl.textContent = '0';
+            entropyOutput.textContent = 'Очищено. Перезапуск...';
+            logisticOutput.textContent = 'Ожидание данных...';
+            setTimeout(startCollection, 100);
+        }
+
+        window.addEventListener('load', startCollection);
+    </script>
+</body>
+</html>
