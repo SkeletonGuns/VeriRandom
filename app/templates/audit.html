@@ -1,217 +1,241 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Аудит генератора</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аудит генератора - VeriRandom</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="/static/css/custom.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
+        .text-muted {
+            color: #ffffff !important;
         }
-        .container { background: #1e293b; padding: 20px; border-radius: 12px; }
-        h1 { color: #f87171; text-align: center; }
-        .upload-area {
-            border: 2px dashed #475569;
-            border-radius: 10px;
-            padding: 40px;
-            text-align: center;
-            margin: 20px 0;
-            background: #334155;
-        }
-        .upload-area:hover {
-            border-color: #f87171;
-            background: #3c4b63;
-        }
-        input[type="file"] {
-            display: none;
-        }
-        .upload-btn {
-            background: #f87171;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .result { margin-top: 20px; display: none; }
-        .anomaly {
-            background: #451a1a;
-            color: #fecaca;
-            padding: 10px;
-            border-radius: 6px;
-            margin: 10px 0;
-        }
-        .histogram {
-            height: 150px;
-            display: flex;
-            align-items: flex-end;
-            gap: 2px;
-            margin: 20px 0;
-            background: #334155;
-            padding: 10px;
-            border-radius: 6px;
-        }
-        .bar {
-            flex: 1;
-            background: #f87171;
-            border-radius: 4px 4px 0 0;
-        }
-        .tests {
-            background: #334155;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            margin-top: 15px;
-        }
-        .status { text-align: center; margin: 15px; color: #fbbf24; }
-        .error { color: #ef4444; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>🔍 Аудит внешнего генератора</h1>
-        <p>Загрузите файл с последовательностью чисел (бинарный или текстовый) для анализа случайности.</p>
+<body class="bg-black text-white">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-warning">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-warning fs-3 me-5" href="/">
+                VeriRandom
+            </a>
 
-        <div class="upload-area" id="dropZone">
-            <p>📁 Перетащите файл сюда или</p>
-            <label class="upload-btn">
-                Выберите файл
-                <input type="file" id="fileInput" accept=".bin,.txt,.csv,.log">
-            </label>
-            <p><small>Поддерживаются: бинарные файлы, текст с числами (разделённые пробелами/переводами строк)</small></p>
+            <button class="navbar-toggler border-warning" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link nav-glow" href="/">Главная</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-glow" href="/lottery">Проведение тиража</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-glow text-white" href="/audit">Аудит генератора</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-glow" href="/demo">Демонстрация</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-glow" href="/guide">Руководство</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-glow" href="/entropy">Сбор</a>
+                    </li>
+                </ul>
+
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="text-warning mb-3">
+                    Аудит внешнего генератора
+                </h1>
+                <p class="lead text-white">Проверка последовательностей на соответствие критериям случайности</p>
+            </div>
         </div>
 
-        <div class="status" id="status"></div>
-        <div class="result" id="result">
-            <h2>📊 Результаты анализа</h2>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card bg-dark border-warning mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0">
+                            Загрузка данных
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-area p-5 text-center border border-dashed border-warning rounded mb-4"
+                             id="uploadArea">
+                            <i class="bi bi-cloud-arrow-up text-warning display-4 mb-3"></i>
+                            <h5 class="text-warning">Перетащите файл сюда</h5>
+                            <p class="text-white small">или нажмите для выбора файла</p>
+                            <input type="file" id="fileInput" class="d-none" accept=".bin,.txt,.csv,.log">
+                            <button class="btn btn-outline-warning mt-3" onclick="document.getElementById('fileInput').click()">
+                                Выбрать файл
+                            </button>
+                        </div>
 
-            <div id="anomalies"></div>
+                        <div class="data-preview mb-4" id="dataPreview" style="display: none;">
+                            <h6 class="text-warning mb-3">Информация о файле</h6>
+                            <div class="bg-dark-subtle p-3 rounded">
+                                <code id="previewContent" class="text-warning small"></code>
+                            </div>
+                        </div>
 
-            <div>
-                <strong>Гистограмма распределения (16 бинов):</strong>
-                <div class="histogram" id="histogram"></div>
+                        <div class="analysis-controls">
+                            <button class="btn btn-warning w-100" id="analyzeBtn" disabled onclick="startAnalysis()">
+                                Запустить анализ
+                            </button>
+                            <div class="text-center mt-2 small text-warning" id="statusMessage"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="tests">
-                <strong>Статистика:</strong><br>
-                Размер файла: <span id="fileSize"></span> байт<br>
-                Энтропия: <span id="entropy"></span> бит/байт<br>
-                χ²-статистика: <span id="chi2"></span>
+            <div class="col-lg-6">
+                <div class="card bg-dark border-warning mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0">
+                            Результаты анализа
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="analysis-summary text-center mb-4" id="analysisSummary">
+                            <div class="placeholder-content">
+                                <i class="bi bi-graph-up text-white display-4 mb-3"></i>
+                                <p class="text-white">Загрузите данные для начала анализа</p>
+                            </div>
+                        </div>
+
+                        <div class="test-results" id="testResults" style="display: none;">
+                            <h6 class="text-warning mb-3">Статистика случайности</h6>
+                            <div class="results-list" id="resultsList">
+                                <div class="test-result-item d-flex justify-content-between align-items-center p-3 border-bottom border-secondary">
+                                    <span class="text-white">Размер файла</span>
+                                    <span class="text-warning" id="fileSize">N/A</span>
+                                </div>
+                                <div class="test-result-item d-flex justify-content-between align-items-center p-3 border-bottom border-secondary">
+                                    <span class="text-white">Энтропия Шеннона</span>
+                                    <span class="text-warning" id="entropy">N/A</span>
+                                </div>
+                                <div class="test-result-item d-flex justify-content-between align-items-center p-3 border-bottom border-secondary">
+                                    <span class="text-white">χ²-статистика</span>
+                                    <span class="text-warning" id="chi2">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="anomalies mt-4" id="anomaliesSection" style="display: none;">
+                            <h6 class="text-warning mb-3">
+                                Выявленные аномалии
+                            </h6>
+                            <div class="anomalies-list" id="anomaliesList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0">
+                            Визуализация (Гистограмма)
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="visualization-placeholder text-center p-4" id="visualizationPlaceholder">
+                            <i class="bi bi-pie-chart text-white display-4 mb-3"></i>
+                            <p class="text-white">Гистограмма появится после анализа</p>
+                        </div>
+                        <div class="charts-container" id="chartsContainer" style="display: none;">
+                            <div class="chart-container p-3 border border-warning rounded">
+                                <h6 class="text-warning text-center">Распределение частот (16 бинов)</h6>
+                                <div class="histogram mt-3" id="histogram">
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const statusEl = document.getElementById('status');
-        const resultEl = document.getElementById('result');
+    <footer class="bg-dark text-warning mt-5">
+        <div class="footer-waves">
+            <div class="wave"></div>
+            <div class="wave"></div>
+        </div>
+        
+        <div class="container py-5">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h4 class="text-warning mb-4">
+                        VeriRandom
+                    </h4>
+                    <p class="text-white lead">
+                        Профессиональная система для работы со случайностью. 
+                        Генерация, анализ и верификация случайных последовательностей.
+                    </p>
+                </div>
+                
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5 class="text-warning mb-3">Навигация</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="/" class="text-white text-decoration-none footer-link">Главная</a></li>
+                        <li class="mb-2"><a href="/lottery" class="text-white text-decoration-none footer-link">Тиражи</a></li>
+                        <li class="mb-2"><a href="/audit" class="text-white text-decoration-none footer-link">Аудит</a></li>
+                        <li class="mb-2"><a href="/demo" class="text-white text-decoration-none footer-link">Демо</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5 class="text-warning mb-3">Ресурсы</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="/guide" class="text-white text-decoration-none footer-link">Руководство</a></li>
+                        <li class="mb-2"><a href="#" class="text-white text-decoration-none footer-link">Документация</a></li>
+                        <li class="mb-2"><a href="#" class="text-white text-decoration-none footer-link">API</a></li>
+                        <li class="mb-2"><a href="#" class="text-white text-decoration-none footer-link">Поддержка</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-3 mb-4">
+                    <h5 class="text-warning mb-3">Контакты</h5>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex align-items-center">
+                            <span class="text-white">support@verirandom.com</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="text-white">+7 (999) 123-45-67</span>
+                        </div>
+                        <div class="d-flex gap-3 mt-2">
+                            <a href="#" class="text-warning social-icon"><i class="bi bi-github fs-4"></i></a>
+                            <a href="#" class="text-warning social-icon"><i class="bi bi-telegram fs-4"></i></a>
+                            <a href="#" class="text-warning social-icon"><i class="bi bi-linkedin fs-4"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="border-warning my-4">
+            
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-white mb-0">&copy; 2024 VeriRandom. Все права защищены.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="d-flex gap-4 justify-content-md-end justify-content-start">
+                        <a href="#" class="text-white text-decoration-none footer-link">Политика конфиденциальности</a>
+                        <a href="#" class="text-white text-decoration-none footer-link">Условия использования</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
 
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
-        });
-
-        function highlight() {
-            dropZone.style.borderColor = '#f87171';
-            dropZone.style.backgroundColor = '#3c4b63';
-        }
-
-        function unhighlight() {
-            dropZone.style.borderColor = '#475569';
-            dropZone.style.backgroundColor = '#334155';
-        }
-
-        dropZone.addEventListener('drop', handleDrop, false);
-        fileInput.addEventListener('change', handleFiles, false);
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            if (files.length) {
-                uploadFile(files[0]);
-            }
-        }
-
-        function handleFiles() {
-            if (this.files.length) {
-                uploadFile(this.files[0]);
-            }
-        }
-
-        async function uploadFile(file) {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            statusEl.textContent = "Анализ данных...";
-            statusEl.className = "status";
-            resultEl.style.display = 'none';
-
-            try {
-                const response = await fetch('/audit/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Ошибка: ${response.status}`);
-                }
-
-                const data = await response.json();
-
-                // Аномалии
-                const anomaliesDiv = document.getElementById('anomalies');
-                anomaliesDiv.innerHTML = '';
-                if (data.anomalies && data.anomalies.length > 0) {
-                    data.anomalies.forEach(msg => {
-                        const el = document.createElement('div');
-                        el.className = 'anomaly';
-                        el.textContent = `⚠️ ${msg}`;
-                        anomaliesDiv.appendChild(el);
-                    });
-                } else {
-                    anomaliesDiv.innerHTML = '<div class="anomaly" style="background:#1a451a; color:#bbf7d0;">✅ Аномалий не обнаружено</div>';
-                }
-
-                const histDiv = document.getElementById('histogram');
-                histDiv.innerHTML = '';
-                const maxVal = Math.max(...data.histogram);
-                data.histogram.forEach(val => {
-                    const bar = document.createElement('div');
-                    bar.className = 'bar';
-                    bar.style.height = maxVal ? `${(val / maxVal) * 100}%` : '0';
-                    histDiv.appendChild(bar);
-                });
-
-                document.getElementById('fileSize').textContent = data.file_size_bytes;
-                document.getElementById('entropy').textContent = data.entropy_per_byte;
-                document.getElementById('chi2').textContent = data.chi_square_stat;
-
-                resultEl.style.display = 'block';
-                statusEl.textContent = "Анализ завершён!";
-                statusEl.style.color = "#34d399";
-
-            } catch (e) {
-                statusEl.textContent = "Ошибка: " + e.message;
-                statusEl.className = "status error";
-            }
-        }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/audit.js"></script>
 </body>
 </html>

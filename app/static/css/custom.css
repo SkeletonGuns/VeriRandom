@@ -1,0 +1,452 @@
+:root {
+    --bs-warning-rgb: 255, 215, 0;
+    --bs-dark-rgb: 0, 0, 0;
+    --bs-yellow: #FFD700;
+    --bs-black: #000000;
+    --bs-gray-800: #1a1a1a;
+    --bs-gray-900: #0d0d0d;
+}
+
+* {
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+body {
+    background: #000000 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 18px;
+}
+
+h1 { font-size: 3.5rem !important; font-weight: 800; }
+h2 { font-size: 2.8rem !important; font-weight: 700; }
+h3 { font-size: 2.2rem !important; font-weight: 600; }
+h4 { font-size: 1.8rem !important; font-weight: 600; }
+h5 { font-size: 1.5rem !important; font-weight: 500; }
+h6 { font-size: 1.3rem !important; font-weight: 500; }
+
+.lead {
+    font-size: 1.4rem !important;
+    line-height: 1.7;
+}
+
+.navbar-brand {
+    font-size: 2rem !important;
+    text-shadow: none !important;
+}
+
+.nav-link {
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.btn {
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 12px 30px;
+}
+
+.card {
+    font-size: 1.1rem;
+}
+
+/* Анимация частиц */
+.particles-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--bs-yellow);
+    border-radius: 50%;
+    animation: float 6s infinite linear;
+}
+
+.particle:nth-child(odd) {
+    animation: float 8s infinite linear;
+}
+
+.particle:nth-child(3n) {
+    animation: float 10s infinite linear;
+    background: rgba(255, 215, 0, 0.6);
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Анимация бинарного потока */
+.binary-stream {
+    position: absolute;
+    font-family: 'Courier New', monospace;
+    color: var(--bs-yellow);
+    font-size: 1.2rem;
+    white-space: nowrap;
+    animation: binaryFlow 15s linear infinite;
+    opacity: 0.3;
+}
+
+@keyframes binaryFlow {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100vw);
+    }
+}
+
+/* Лотерейный барабан анимация */
+.lottery-drum-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 0 auto;
+}
+
+.lottery-drum {
+    width: 200px;
+    height: 200px;
+    border: 4px solid var(--bs-yellow);
+    border-radius: 50%;
+    position: relative;
+    margin: 0 auto;
+    animation: drumRotate 8s linear infinite;
+    background: rgba(255, 215, 0, 0.1);
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+}
+
+.drum-numbers {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    animation: numbersRotate 4s linear infinite reverse;
+}
+
+.number {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: var(--bs-yellow);
+    color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transform-origin: 100px 100px;
+}
+
+.number:nth-child(1) { transform: rotate(0deg) translateX(80px) rotate(0deg); }
+.number:nth-child(2) { transform: rotate(45deg) translateX(80px) rotate(-45deg); }
+.number:nth-child(3) { transform: rotate(90deg) translateX(80px) rotate(-90deg); }
+.number:nth-child(4) { transform: rotate(135deg) translateX(80px) rotate(-135deg); }
+.number:nth-child(5) { transform: rotate(180deg) translateX(80px) rotate(-180deg); }
+.number:nth-child(6) { transform: rotate(225deg) translateX(80px) rotate(-225deg); }
+.number:nth-child(7) { transform: rotate(270deg) translateX(80px) rotate(-270deg); }
+.number:nth-child(8) { transform: rotate(315deg) translateX(80px) rotate(-315deg); }
+
+.winning-numbers {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.winning-number {
+    width: 50px;
+    height: 50px;
+    background: var(--bs-yellow);
+    color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.animate-bounce {
+    animation: bounce 2s infinite;
+}
+
+.animate-bounce-delay {
+    animation: bounce 2s infinite 0.3s;
+}
+
+@keyframes drumRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes numbersRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(-360deg); }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-20px); }
+    60% { transform: translateY(-10px); }
+}
+
+/* Убираем pulse-glow анимацию */
+.pulse-glow {
+    box-shadow: none !important;
+    animation: none !important;
+}
+
+/* Анимированный футер */
+.footer-waves {
+    position: relative;
+    height: 150px;
+    overflow: hidden;
+}
+
+.wave {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 200%;
+    height: 100px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120'%3E%3Cpath d='M0 0v46.29c47.79 22.2 103.59 32.17 158 28 70.36-5.37 136.33-33.31 206.8-37.5 73.84-4.36 147.54 16.88 218.2 35.26 69.27 18 138.3 24.88 209.4 13.08 36.15-6 69.85-17.84 104.45-29.34C989.49 25 1113-14.29 1200 52.47V0z' fill='%23ffd700'/%3E%3C/svg%3E");
+    animation: waveMove 10s linear infinite;
+}
+
+.wave:nth-child(2) {
+    animation: waveMove 8s linear infinite;
+    opacity: 0.5;
+    animation-delay: -5s;
+}
+
+@keyframes waveMove {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* Кастомные карточки */
+.neo-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid transparent;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.neo-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s;
+}
+
+.neo-card:hover::before {
+    left: 100%;
+}
+
+.neo-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    border-color: var(--bs-yellow);
+    box-shadow: 0 20px 40px rgba(255, 215, 0, 0.2);
+}
+
+/* Анимированная навигация */
+.nav-glow {
+    position: relative;
+}
+
+.nav-glow::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    width: 0;
+    height: 3px;
+    background: var(--bs-yellow);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.nav-glow:hover::after,
+.nav-glow.active::after {
+    width: 100%;
+}
+
+/* Стили для компактной навигации */
+.navbar-nav .nav-link {
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    margin: 0 0.5rem;
+    padding: 8px 16px !important;
+}
+
+.navbar-nav .nav-link:hover {
+    background: rgba(255, 215, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.navbar-nav .nav-link.active {
+    background: rgba(255, 215, 0, 0.2);
+    color: #ffd700 !important;
+}
+
+.nav-glow {
+    position: relative;
+}
+
+.nav-glow::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--bs-yellow);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.nav-glow:hover::after,
+.nav-glow.active::after {
+    width: 80%;
+}
+
+/* Кнопка демо */
+.btn-demo {
+    padding: 8px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    border: none;
+    color: #000 !important;
+}
+
+.btn-demo:hover {
+    background: linear-gradient(45deg, #e6c200, #ffd700);
+    transform: translateY(-1px);
+}
+
+/* Убираем иконки перед текстами */
+.feature-card i,
+.scenario-card i,
+.guide-section i:not(.navbar-brand i) {
+    display: none;
+}
+
+/* Убираем свечение у всех элементов */
+* {
+    text-shadow: none !important;
+}
+
+/* Стили для футера */
+.footer-link {
+    transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+    color: var(--bs-yellow) !important;
+}
+
+.social-icon {
+    transition: transform 0.3s ease;
+}
+
+.social-icon:hover {
+    transform: translateY(-3px);
+}
+
+/* Адаптивность */
+@media (max-width: 991px) {
+    .navbar-nav .nav-link {
+        margin: 0.25rem 0;
+        text-align: center;
+    }
+    
+    .navbar-nav {
+        text-align: center;
+        padding: 1rem 0;
+    }
+    
+    .navbar-brand {
+        margin-right: 0 !important;
+    }
+}
+
+@media (max-width: 768px) {
+    * {
+        font-size: 16px;
+    }
+    
+    h1 { font-size: 2.5rem !important; }
+    h2 { font-size: 2rem !important; }
+    h3 { font-size: 1.8rem !important; }
+    
+    .lead {
+        font-size: 1.2rem !important;
+    }
+    
+    .lottery-drum-container {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .lottery-drum {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .number {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+        transform-origin: 75px 75px;
+    }
+    
+    .number:nth-child(1) { transform: rotate(0deg) translateX(60px) rotate(0deg); }
+    .number:nth-child(2) { transform: rotate(45deg) translateX(60px) rotate(-45deg); }
+    .number:nth-child(3) { transform: rotate(90deg) translateX(60px) rotate(-90deg); }
+    .number:nth-child(4) { transform: rotate(135deg) translateX(60px) rotate(-135deg); }
+    .number:nth-child(5) { transform: rotate(180deg) translateX(60px) rotate(-180deg); }
+    .number:nth-child(6) { transform: rotate(225deg) translateX(60px) rotate(-225deg); }
+    .number:nth-child(7) { transform: rotate(270deg) translateX(60px) rotate(-270deg); }
+    .number:nth-child(8) { transform: rotate(315deg) translateX(60px) rotate(-315deg); }
+    
+    .winning-number {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}

@@ -1,160 +1,436 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <title> Демонстрация </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Демонстрация - VeriRandom</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="/static/css/custom.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
+        .text-muted {
+            color: #ffffff !important;
         }
-        .container { background: #1e293b; padding: 20px; border-radius: 12px; }
-        h1 { color: #8b5cf6; text-align: center; }
-        .pipeline {
+
+        /* Одинаковая высота для карточек примеров */
+        .example-card {
+            height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 25px;
-            margin: 30px 0;
         }
-        .stage {
-            background: #334155;
-            padding: 20px;
-            border-radius: 10px;
+
+        .example-card .btn {
+            margin-top: auto;
+        }
+
+        /* Черный цвет для процентов на полосе загрузки */
+        .progress-bar {
+            color: #000000 !important;
+            font-weight: bold;
+        }
+
+        /* Убираем серость с иконки в результатах */
+        .bi-bar-chart {
+            color: #ffd700 !important;
+        }
+
+        /* Стили для нового демо-конвейера */
+        .pipeline-stage {
+            border: 1px solid #495057;
+            border-radius: 8px;
+            margin-bottom: 20px;
             position: relative;
         }
-        .stage::before {
-            content: "→";
+
+        .pipeline-stage:not(:last-child)::after {
+            content: "↓";
             position: absolute;
-            bottom: -20px;
+            bottom: -25px;
             left: 50%;
             transform: translateX(-50%);
-            color: #94a3b8;
-            font-size: 24px;
+            color: #ffd700;
+            font-size: 1.5rem;
+            font-weight: bold;
         }
-        .stage:last-child::before {
-            display: none;
-        }
-        .stage-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            color: #c4b5fd;
-        }
-        .stage-title::before {
-            content: "●";
-            color: #8b5cf6;
-        }
-        .data {
-            font-family: monospace;
-            background: #0f172a;
-            padding: 12px;
-            border-radius: 6px;
+
+        .data-display {
+            font-family: 'Courier New', monospace;
             word-break: break-all;
-            font-size: 14px;
+            background: #1e293b; /* bg-darker */
+            padding: 10px;
+            border-radius: 4px;
+            min-height: 40px; /* Чтобы не скакало при пустом контенте */
         }
-        .explanation {
-            margin-top: 10px;
-            color: #94a3b8;
-            font-style: italic;
-        }
-        button {
-            background: #8b5cf6;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: block;
-            margin: 20px auto;
-        }
-        button:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-        }
-        .status { text-align: center; margin: 15px; color: #fbbf24; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>🎓 Демонстрация работы системы</h1>
-        <p>Этот режим показывает, как сырая энтропия превращается в криптостойкое случайное число.</p>
+<body class="bg-black text-white">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-warning">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-warning fs-3 me-5" href="/">
+                VeriRandom
+            </a>
 
-        <button id="demoBtn" onclick="runDemo()">Запустить демонстрацию</button>
-        <div class="status" id="status"></div>
+            <button class="navbar-toggler border-warning" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-        <div class="pipeline" id="pipeline" style="display:none;">
-            <div class="stage">
-                <div class="stage-title">Сырая энтропия (имитация)</div>
-                <div class="data" id="raw"></div>
-                <div class="explanation" id="exp1"></div>
-            </div>
-            <div class="stage">
-                <div class="stage-title">Chaotic Map (Logistic)</div>
-                <div class="data" id="chaotic"></div>
-                <div class="explanation" id="exp2"></div>
-            </div>
-            <div class="stage">
-                <div class="stage-title">Cellular Automaton (Rule 30)</div>
-                <div class="data" id="ca"></div>
-                <div class="explanation" id="exp3"></div>
-            </div>
-            <div class="stage">
-                <div class="stage-title">SHA3-256 Whitening</div>
-                <div class="data" id="hash"></div>
-                <div class="explanation" id="exp4"></div>
-            </div>
-            <div class="stage">
-                <div class="stage-title">Финальное семя (HKDF)</div>
-                <div class="data" id="final"></div>
-                <div class="explanation" id="exp5"></div>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link nav-glow" href="/">Главная</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-glow" href="/lottery">Проведение тиража</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-glow" href="/audit">Аудит генератора</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-glow text-white" href="/demo">Демонстрация</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-glow" href="/guide">Руководство</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-glow" href="/entropy">Сбор</a>
+                    </li>
+                </ul>
+
             </div>
         </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="text-warning mb-3">
+                    Демонстрация работы системы
+                </h1>
+                <p class="lead text-white">Интерактивная демонстрация возможностей анализа случайности</p>
+            </div>
+        </div>
+
+        <h2 class="text-warning mb-4 border-bottom border-warning pb-2">1. Демонстрация анализа случайности</h2>
+        <p class="text-white">Показывает, как система VeriRandom оценивает качество случайных последовательностей.</p>
+
+        <div class="row mb-5">
+            <div class="col">
+                <div class="card bg-dark border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0">
+                            Примеры последовательностей
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-4 d-flex">
+                                <div class="example-card text-center p-4 border border-success rounded w-100">
+                                    <i class="bi bi-check-circle-fill text-success display-4 mb-3"></i>
+                                    <h5 class="text-success">Идеально случайная</h5>
+                                    <p class="text-white small">Последовательность с высоким качеством энтропии</p>
+                                    <button class="btn btn-outline-success btn-sm" onclick="loadExample('perfect')">
+                                        Запустить анализ
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4 d-flex">
+                                <div class="example-card text-center p-4 border border-warning rounded w-100">
+                                    <i class="bi bi-exclamation-triangle text-warning display-4 mb-3"></i>
+                                    <h5 class="text-warning">Слабая корреляция</h5>
+                                    <p class="text-white small">Обнаруживаемые паттерны в данных</p>
+                                    <button class="btn btn-outline-warning btn-sm" onclick="loadExample('weak')">
+                                        Запустить анализ
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4 d-flex">
+                                <div class="example-card text-center p-4 border border-danger rounded w-100">
+                                    <i class="bi bi-x-circle-fill text-danger display-4 mb-3"></i>
+                                    <h5 class="text-danger">Предсказуемая</h5>
+                                    <p class="text-white small">Явные закономерности и паттерны</p>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="loadExample('predictable')">
+                                        Запустить анализ
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card bg-dark border-warning mb-4">
+                    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            Интерактивный анализ
+                        </h4>
+                        <span class="badge bg-dark" id="currentExample">Не выбрано</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="sequence-visualization mb-4">
+                            <h6 class="text-warning mb-3">Визуализация последовательности</h6>
+                            <div class="sequence-container bg-gray-800 p-3 rounded" id="sequenceContainer">
+                                <p class="text-white text-center mb-0">Выберите пример для отображения данных</p>
+                            </div>
+                        </div>
+
+                        <div class="real-time-analysis">
+                            <h6 class="text-warning mb-3">Анализ в реальном времени</h6>
+                            <div class="analysis-progress">
+                                <div class="progress mb-3 bg-gray-800" style="height: 20px;">
+                                    <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated"
+                                         id="analysisProgress" style="width: 0%">0%</div>
+                                </div>
+
+                                <div class="test-status" id="testStatus">
+                                    <div class="status-item d-flex justify-content-between align-items-center p-2 border-bottom border-secondary">
+                                        <span class="text-white">Ожидание запуска анализа...</span>
+                                        <i class="bi bi-hourglass text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card bg-dark border-warning mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0">
+                            Результаты
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="results-summary text-center mb-4" id="resultsSummary">
+                            <div class="placeholder">
+                                <i class="bi bi-bar-chart display-4 mb-3"></i>
+                                <p class="text-white">Результаты появятся после анализа</p>
+                            </div>
+                        </div>
+
+                        <div class="key-metrics" id="keyMetrics" style="display: none;">
+                            <h6 class="text-warning mb-3">Ключевые метрики</h6>
+                            <div class="metrics-grid">
+                                <div class="metric-item d-flex justify-content-between p-2 border-bottom border-secondary">
+                                    <span class="text-white">Энтропия:</span>
+                                    <span class="text-warning" id="entropyValue">-</span>
+                                </div>
+                                <div class="metric-item d-flex justify-content-between p-2 border-bottom border-secondary">
+                                    <span class="text-white">p-значение:</span>
+                                    <span class="text-warning" id="pValue">-</span>
+                                </div>
+                                <div class="metric-item d-flex justify-content-between p-2 border-bottom border-secondary">
+                                    <span class="text-white">Длина последовательности:</span>
+                                    <span class="text-warning" id="sequenceLength">-</span>
+                                </div>
+                                <div class="metric-item d-flex justify-content-between p-2">
+                                    <span class="text-white">Качество случайности:</span>
+                                    <span class="text-warning" id="randomnessQuality">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0">
+                            Объяснение
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="educational-content" id="educationalContent">
+                            <p class="text-white small">
+                                Выберите один из примеров последовательностей для демонстрации работы системы анализа случайности.
+                                Система покажет, как обнаруживаются паттерны и оценивается качество энтропии.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="border-warning my-5">
+        <h2 class="text-warning mb-4 border-bottom border-warning pb-2">2. Конвейер генерации криптостойкого семени</h2>
+        <p class="text-white">Демонстрирует, как VeriRandom обрабатывает сырую энтропию через серию криптографических и хаотических преобразований для создания финального, непредсказуемого семени.</p>
+
+        <div class="text-center mb-4">
+            <button id="seedDemoBtn" class="btn btn-warning btn-lg" onclick="runSeedDemo()">
+                <i class="bi bi-cpu-fill me-2"></i> Запустить конвейер генерации
+            </button>
+            <div class="status mt-3 text-warning fw-bold" id="seedStatus">Нажмите кнопку, чтобы начать.</div>
+        </div>
+
+        <div class="pipeline my-4" id="seedPipeline" style="display:none;">
+
+            <div class="card bg-dark pipeline-stage p-3">
+                <div class="card-header bg-dark border-warning border-0 p-0 mb-3">
+                    <h5 class="text-warning mb-0"><i class="bi bi-box-arrow-in-down me-2"></i> 1. Сырая энтропия (имитация)</h5>
+                </div>
+                <div class="data-display text-white-50" id="raw_data">...</div>
+                <p class="text-muted small mt-2" id="raw_exp">Имитация сбора энтропии из различных источников (браузер, ОС). Может содержать слабые паттерны.</p>
+            </div>
+
+            <div class="card bg-dark pipeline-stage p-3">
+                <div class="card-header bg-dark border-warning border-0 p-0 mb-3">
+                    <h5 class="text-warning mb-0"><i class="bi bi-lightning-charge me-2"></i> 2. Chaotic Map (Logistic)</h5>
+                </div>
+                <div class="data-display text-white-50" id="chaotic_data">...</div>
+                <p class="text-muted small mt-2" id="chaotic_exp">Применяет хаотическое отображение для перемешивания и расширения энтропии, нарушая слабые корреляции.</p>
+            </div>
+
+            <div class="card bg-dark pipeline-stage p-3">
+                <div class="card-header bg-dark border-warning border-0 p-0 mb-3">
+                    <h5 class="text-warning mb-0"><i class="bi bi-grid-3x3 me-2"></i> 3. Cellular Automaton (Rule 30)</h5>
+                </div>
+                <div class="data-display text-white-50" id="ca_data">...</div>
+                <p class="text-muted small mt-2" id="ca_exp">Использует клеточный автомат (Правило 30) для дальнейшего усложнения структуры данных и повышения энтропии.</p>
+            </div>
+
+            <div class="card bg-dark pipeline-stage p-3">
+                <div class="card-header bg-dark border-warning border-0 p-0 mb-3">
+                    <h5 class="text-warning mb-0"><i class="bi bi-key-fill me-2"></i> 4. SHA3-256 Whitening</h5>
+                </div>
+                <div class="data-display text-white-50" id="hash_data">...</div>
+                <p class="text-muted small mt-2" id="hash_exp">Криптографический хэш для отбеливания данных, обеспечивая равномерное распределение и непредсказуемость каждого бита.</p>
+            </div>
+
+            <div class="card bg-dark pipeline-stage p-3 border-success">
+                <div class="card-header bg-dark border-success border-0 p-0 mb-3">
+                    <h5 class="text-success mb-0"><i class="bi bi-lock-fill me-2"></i> 5. Финальное семя (HKDF)</h5>
+                </div>
+                <div class="data-display text-success" id="final_data">...</div>
+                <p class="text-muted small mt-2" id="final_exp">Используется HKDF для окончательного извлечения криптостойкого семени фиксированной длины, готового для использования в PRNG.</p>
+            </div>
+
+        </div>
+
     </div>
 
-    <script>
-        async function runDemo() {
-            const btn = document.getElementById('demoBtn');
-            const status = document.getElementById('status');
-            const pipeline = document.getElementById('pipeline');
+    <footer class="bg-dark text-warning mt-5">
+        <div class="footer-waves">
+            <div class="wave"></div>
+            <div class="wave"></div>
+        </div>
 
-            btn.disabled = true;
-            status.textContent = "Запуск демонстрации...";
-            pipeline.style.display = 'none';
+        <div class="container py-5">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h4 class="text-warning mb-4">
+                        VeriRandom
+                    </h4>
+                    <p class="text-white lead">
+                        Профессиональная система для работы со случайностью.
+                        Генерация, анализ и верификация случайных последовательностей.
+                    </p>
+                </div>
 
-            try {
-                const res = await fetch('/demo/generate');
-                const data = await res.json();
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5 class="text-warning mb-3">Навигация</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="/" class="text-white text-decoration-none footer-link">Главная</a></li>
+                        <li class="mb-2"><a href="/lottery" class="text-white text-decoration-none footer-link">Тиражи</a></li>
+                        <li class="mb-2"><a href="/audit" class="text-white text-decoration-none footer-link">Аудит</a></li>
+                        <li class="mb-2"><a href="/demo" class="text-white text-decoration-none footer-link">Демо</a></li>
+                    </ul>
+                </div>
 
-                document.getElementById('raw').textContent = data.raw_entropy_sample;
-                document.getElementById('chaotic').textContent = data.after_chaotic;
-                document.getElementById('ca').textContent = data.after_ca;
-                document.getElementById('hash').textContent = data.after_hash;
-                document.getElementById('final').textContent = data.final_seed;
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5 class="text-warning mb-3">Ресурсы</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="/guide" class="text-white text-decoration-none footer-link">Руководство</a></li>
+                        <li class="mb-2"><a href="#" class="text-white text-decoration-none footer-link">Документация</a></li>
+                        <li class="mb-2"><a href="#" class="text-white text-decoration-none footer-link">API</a></li>
+                        <li class="mb-2"><a href="#" class="text-white text-decoration-none footer-link">Поддержка</a></li>
+                    </ul>
+                </div>
 
-                const exp = data.explanations;
-                document.getElementById('exp1').textContent = "Имитация сбора энтропии из браузера (на основе os.urandom).";
-                document.getElementById('exp2').textContent = exp.chaotic;
-                document.getElementById('exp3').textContent = exp.ca;
-                document.getElementById('exp4').textContent = exp.hash;
-                document.getElementById('exp5').textContent = exp.hkdf;
+                <div class="col-lg-3 mb-4">
+                    <h5 class="text-warning mb-3">Контакты</h5>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex align-items-center">
+                            <span class="text-white">support@verirandom.com</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="text-white">+7 (999) 123-45-67</span>
+                        </div>
+                        <div class="d-flex gap-3 mt-2">
+                            <a href="#" class="text-warning social-icon"><i class="bi bi-github fs-4"></i></a>
+                            <a href="#" class="text-warning social-icon"><i class="bi bi-telegram fs-4"></i></a>
+                            <a href="#" class="text-warning social-icon"><i class="bi bi-linkedin fs-4"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                pipeline.style.display = 'flex';
-                status.textContent = "Демонстрация завершена!";
-                status.style.color = "#34d399";
+            <hr class="border-warning my-4">
 
-            } catch (e) {
-                status.textContent = "Ошибка: " + e.message;
-                status.className = "status error";
-            } finally {
-                btn.disabled = false;
-            }
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-white mb-0">&copy; 2024 VeriRandom. Все права защищены.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="d-flex gap-4 justify-content-md-end justify-content-start">
+                        <a href="#" class="text-white text-decoration-none footer-link">Политика конфиденциальности</a>
+                        <a href="#" class="text-white text-decoration-none footer-link">Условия использования</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+ <script>
+    async function runSeedDemo() {
+        const btn = document.getElementById('seedDemoBtn');
+        const status = document.getElementById('seedStatus');
+        const pipeline = document.getElementById('seedPipeline');
+
+        // Сброс
+        const fields = ['raw_data', 'chaotic_data', 'ca_data', 'hash_data', 'final_data'];
+        fields.forEach(id => document.getElementById(id).textContent = 'Ожидание...');
+
+        btn.disabled = true;
+        status.textContent = "Запуск конвейера...";
+        status.className = "status mt-3 text-warning fw-bold";
+        pipeline.style.display = 'block';
+
+        try {
+            const res = await fetch('/demo/generate');
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            const data = await res.json();
+
+            // Обновление данных
+            document.getElementById('raw_data').textContent = data.raw_entropy_sample;
+            document.getElementById('chaotic_data').textContent = data.after_chaotic;
+            document.getElementById('ca_data').textContent = data.after_ca;
+            document.getElementById('hash_data').textContent = data.after_hash;
+            document.getElementById('final_data').textContent = data.final_seed;
+
+            // Обновление пояснений
+            document.getElementById('chaotic_exp').textContent = data.explanations.chaotic;
+            document.getElementById('ca_exp').textContent = data.explanations.ca;
+            document.getElementById('hash_exp').textContent = data.explanations.hash;
+            document.getElementById('final_exp').textContent = data.explanations.hkdf;
+
+            // Выделить финальный результат
+            document.getElementById('final_data').className = "data-display text-success fw-bold";
+
+            status.textContent = "Конвейер генерации завершен! 🎉";
+            status.className = "status mt-3 text-success fw-bold";
+
+        } catch (e) {
+            console.error("Ошибка в runSeedDemo:", e);
+            status.textContent = "Ошибка: " + (e.message || 'неизвестная');
+            status.className = "status mt-3 text-danger fw-bold";
+        } finally {
+            btn.disabled = false;
         }
-    </script>
+    }
+</script>
+    <script src="static/js/demo.js"></script>
 </body>
 </html>

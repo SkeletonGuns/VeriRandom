@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse
 
 # ======================
 # Конфигурация
@@ -39,8 +39,7 @@ app.add_middleware(
 entropy_pool: List[int] = []
 
 templates = Jinja2Templates(directory="app/templates")
-
-#app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 
 # ======================
@@ -76,7 +75,7 @@ def rule30_bytes(data: bytes, steps: int = 10) -> bytes:
     Rule 30 для небольших данных.
     Оптимизирован для скорости на малых объёмах.
     """
-    if len(data) > 256: # было 64 бита, думаю по производительности не ударит сильно.
+    if len(data) > 256: # думаю по производительности не ударит сильно.
         raise ValueError("Rule30: вход ограничен 256 байтами")
 
     bits = []
@@ -113,7 +112,7 @@ def shannon_entropy(data: bytes) -> float:
 
 
 def chi_square_statistic(data: bytes) -> float | None:
-    """χ²-статистика для равномерности (без p-value)."""
+    """χ²-статистика для равномерности."""
     if len(data) < 256:
         return None
     counts = Counter(data)
@@ -151,11 +150,6 @@ def extract_seed(min_bytes: int = 32) -> bytes:
 # Эндпоинты
 # ======================
 
-@app.get("/")
-async def root():
-    return {"service": "Quantum Vacuum RNG", "status": "ok"}
-
-
 @app.get("/entropy/status")
 async def entropy_status():
     return {"bytes_available": len(entropy_pool)}
@@ -163,7 +157,7 @@ async def entropy_status():
 
 @app.post("/entropy/feed")
 async def feed_entropy(payload: Dict[str, Any]):
-    """Приём энтропии из браузера с защитой от DoS."""
+    """Приём энтропии из браузера."""
     raw = payload.get("raw", [])
     if not isinstance(raw, list):
         raise HTTPException(400, "Ожидался массив байтов")
@@ -178,6 +172,48 @@ async def feed_entropy(payload: Dict[str, Any]):
     entropy_pool.extend(raw)
     return {"status": "ok", "total_bytes": len(entropy_pool)}
 
+
+@app.post("/api/generate_nist_data")
+async def generate_nist_data(payload: Dict[str, Any]):
+    """Генерирует 1,000,000 бинарных значений для тестов NIST/Dieharder."""
+
+    target_bits = payload.get("length", 1000000)
+    target_bytes = target_bits // 8
+
+    try:
+        final_seed = extract_seed(32)
+    except HTTPException as e:
+        if e.status_code == 425:
+            raw_fallback = os.urandom(32)
+            step1 = logistic_map_bytes(raw_fallback)
+            step2 = rule30_bytes(step1)
+            step3 = hashlib.sha3_256(step2).digest()
+            hkdf = HKDF(
+                algorithm=hashes.SHA3_256(),
+                length=32,
+                salt=None,
+                info=b"fallback-seed"
+            )
+            final_seed = hkdf.derive(step3)
+        else:
+            raise e
+
+    seed_int = int.from_bytes(final_seed, byteorder='big')
+    rng = random.Random(seed_int)
+    random_bytes = rng.randbytes(target_bytes)
+    binary_string = "".join(format(byte, '08b') for byte in random_bytes)
+    if len(binary_string) > target_bits:
+        binary_string = binary_string[:target_bits]
+
+    filename = f"for_tests_{target_bits}_bits.txt"
+
+    return PlainTextResponse(
+        binary_string,
+        media_type="text/plain",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        }
+    )
 
 @app.post("/lottery/draw")
 async def lottery_draw():
@@ -299,7 +335,7 @@ async def demo_generate():
         }
     }
 
-@app.get("/main", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
@@ -314,3 +350,11 @@ async def audit_page(request: Request):
 @app.get("/demo", response_class=HTMLResponse)
 async def demo_page(request: Request):
     return templates.TemplateResponse("demo.html", {"request": request})
+
+@app.get("/guide", response_class=HTMLResponse)
+async def guide(request: Request):
+    return templates.TemplateResponse("guide.html", {"request": request})
+
+@app.get("/entropy", response_class=HTMLResponse)
+async def entropy(request: Request):
+    return templates.TemplateResponse("entropy.html", {"request": request})
