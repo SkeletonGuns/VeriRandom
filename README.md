@@ -33,12 +33,12 @@
 
 ### Сценарий 2: Аудит
 
-![Аудит](<img width="1919" height="965" alt="image" src="https://github.com/user-attachments/assets/b5e4c7ba-063e-4e98-9885-2192606ee7cf" />
+![Аудит](https://github.com/user-attachments/assets/b5e4c7ba-063e-4e98-9885-2192606ee7cf>
 )
 
 ### Сценарий 3: Демо
 
-![Демо](<img width="1919" height="964" alt="image" src="https://github.com/user-attachments/assets/af69e24e-0124-4dd8-baa5-2f5891d3424b" />
+![Демо](https://github.com/user-attachments/assets/af69e24e-0124-4dd8-baa5-2f5891d3424b>
 )
 
 ---
@@ -54,7 +54,9 @@
 
 ```bash
 git clone https://github.com/SkeletonGuns/VeriRandom.git
-cd VeryRandom
+cd VeriRandom
+python3 -m venv venv
+source env/bin/activate
 pip install -r requirements.txt
-python run.py
+python run.py или uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
