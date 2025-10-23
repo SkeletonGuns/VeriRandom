@@ -33,13 +33,11 @@
 
 ### Сценарий 2: Аудит
 
-![Аудит](https://github.com/user-attachments/assets/b5e4c7ba-063e-4e98-9885-2192606ee7cf>
-)
+![Аудит](https://github.com/user-attachments/assets/b5e4c7ba-063e-4e98-9885-2192606ee7cf)
 
 ### Сценарий 3: Демо
 
-![Демо](https://github.com/user-attachments/assets/af69e24e-0124-4dd8-baa5-2f5891d3424b>
-)
+![Демо](https://github.com/user-attachments/assets/af69e24e-0124-4dd8-baa5-2f5891d3424b)
 
 ---
 
