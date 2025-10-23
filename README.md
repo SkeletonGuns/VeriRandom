@@ -29,7 +29,7 @@
 
 ### Сценарий 1: Лотерея
 
-![Лотерея](<img width="1919" height="964" alt="image" src="https://github.com/user-attachments/assets/956ce05b-985f-4e2e-9ff9-dd4ec5730c34" />)
+![Лотерея](https://github.com/user-attachments/assets/956ce05b-985f-4e2e-9ff9-dd4ec5730c34)
 
 ### Сценарий 2: Аудит
 
